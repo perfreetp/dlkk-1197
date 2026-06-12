@@ -69,14 +69,14 @@ export const useMessageStore = create<MessageState>()(
       },
 
       createThread: (participants, applicationId) => {
-        const existing = get().threads.find(
-          (t) =>
-            t.participants.length === participants.length &&
-            t.participants.every((p) => participants.includes(p))
-        );
-        if (existing) return existing.id;
+        if (applicationId) {
+          const existing = get().threads.find(
+            (t) => t.applicationId === applicationId
+          );
+          if (existing) return existing.id;
+        }
 
-        const id = "thread-" + Date.now();
+        const id = "thread-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
         const newThread: MessageThread = {
           id,
           participants,
@@ -112,23 +112,26 @@ export const useMessageStore = create<MessageState>()(
           .threads.filter((t) => t.participants.includes(userId))
           .reduce((sum, t) => sum + t.unreadCount, 0),
 
-      markThreadRead: (threadId) =>
+      markThreadRead: (threadId, userId) =>
         set((state) => ({
           threads: state.threads.map((t) =>
             t.id === threadId ? { ...t, unreadCount: 0 } : t
           ),
           messages: state.messages.map((m) =>
-            m.threadId === threadId ? { ...m, read: true } : m
+            m.threadId === threadId && m.senderId !== userId
+              ? { ...m, read: true }
+              : m
           ),
         })),
     }),
     {
       name: "message-store",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         threads: state.threads,
         messages: state.messages,
         draftText: state.draftText,
+        activeThreadId: state.activeThreadId,
       }),
     }
   )

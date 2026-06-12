@@ -56,10 +56,17 @@ export default function CreditsPage() {
     [users, currentUserId]
   );
   
-  const reviews = useMemo(
-    () => (curUser ? allReviews.filter((r) => r.revieweeId === curUser.id) : []),
-    [allReviews, curUser?.id]
-  );
+  const reviews = useMemo(() => {
+    if (!curUser) return [];
+    return allReviews
+      .filter(
+        (r) => r.revieweeId === curUser.id || r.reviewerId === curUser.id
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+  }, [allReviews, curUser?.id]);
   const records = useMemo(
     () => (curUser ? allRecords.filter((r) => r.userId === curUser.id) : []),
     [allRecords, curUser?.id]
@@ -364,9 +371,10 @@ export default function CreditsPage() {
               ) : (
                 <div className="space-y-3">
                   {reviews.map((r, i) => {
-                    const reviewer = useUserStore
-                      .getState()
-                      .getUserById(r.reviewerId);
+                    const isReceived = curUser?.id === r.revieweeId;
+                    const otherUser = isReceived
+                      ? users.find((u) => u.id === r.reviewerId)
+                      : users.find((u) => u.id === r.revieweeId);
                     return (
                       <div
                         key={r.id}
@@ -375,11 +383,11 @@ export default function CreditsPage() {
                       >
                         <div className="flex items-start gap-4 mb-3">
                           <Avatar
-                            name={reviewer?.name || "用户"}
+                            name={otherUser?.name || "用户"}
                             size="md"
-                            src={reviewer?.avatar}
+                            src={otherUser?.avatar}
                             badge={
-                              reviewer?.verifiedCompany ? (
+                              otherUser?.verifiedCompany ? (
                                 <div className="w-4 h-4 rounded-full bg-success-500 text-white flex items-center justify-center ring-2 ring-white">
                                   <ShieldCheck size={10} />
                                 </div>
@@ -390,10 +398,13 @@ export default function CreditsPage() {
                             <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="font-semibold text-neutral-800 truncate">
-                                  {reviewer?.name}
+                                  {isReceived ? r.reviewerName || otherUser?.name : r.revieweeName || otherUser?.name}
                                 </span>
+                                <Badge variant={isReceived ? "success" : "primary"} size="sm">
+                                  {isReceived ? "收到的评价" : "我发出的"}
+                                </Badge>
                                 <Badge variant="default" size="sm">
-                                  {reviewer?.title || "用户"}
+                                  {otherUser?.title || "用户"}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-0.5">
@@ -418,9 +429,27 @@ export default function CreditsPage() {
                             </div>
                           </div>
                         </div>
-                        <p className="text-sm text-neutral-600 leading-relaxed mb-4 pl-14">
+                        <p className="text-sm text-neutral-600 leading-relaxed mb-3 pl-14">
                           {r.content}
                         </p>
+                        {(r.positionTitle || r.applicationStatus) && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3 pl-14 text-xs">
+                            {r.positionTitle && (
+                              <Badge variant="primary" size="sm">
+                                <FileText size={10} />
+                                {r.positionTitle}
+                              </Badge>
+                            )}
+                            {r.companyName && (
+                              <span className="text-neutral-500">{r.companyName}</span>
+                            )}
+                            {r.applicationStatus && (
+                              <Badge variant="default" size="sm">
+                                申请状态：{r.applicationStatus}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-4 pl-14 pt-3 border-t border-neutral-100 text-xs text-neutral-500">
                           {Object.entries(r.dimensions).map(([k, v]) => {
                             const labels: Record<string, string> = {

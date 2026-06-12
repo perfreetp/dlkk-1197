@@ -113,6 +113,11 @@ export interface Review {
   dimensions: ReviewDimensions;
   content: string;
   createdAt: string;
+  positionTitle?: string;
+  companyName?: string;
+  applicationStatus?: string;
+  reviewerName?: string;
+  revieweeName?: string;
 }
 
 export interface CreditRecordItem {

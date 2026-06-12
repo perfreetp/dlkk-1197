@@ -84,8 +84,8 @@ export const useApplicationStore = create<ApplicationState>()(
           time: new Date().toISOString(),
           note,
         };
-        set((state) => ({
-          applications: state.applications.map((a) =>
+        set((state) => {
+          const updatedApps = state.applications.map((a) =>
             a.id === id
               ? {
                   ...a,
@@ -94,8 +94,20 @@ export const useApplicationStore = create<ApplicationState>()(
                   updatedAt: new Date().toISOString(),
                 }
               : a
-          ),
-        }));
+          );
+          const updatedApp = updatedApps.find((a) => a.id === id);
+          return {
+            applications: updatedApps,
+            selectedApplication:
+              state.selectedApplication?.id === id
+                ? updatedApp || null
+                : state.selectedApplication,
+            selectedApplicationForReview:
+              state.selectedApplicationForReview?.id === id
+                ? updatedApp || null
+                : state.selectedApplicationForReview,
+          };
+        });
       },
 
       getApplicationsByUser: (userId) => {
@@ -109,8 +121,8 @@ export const useApplicationStore = create<ApplicationState>()(
       getApplicationById: (id) => get().applications.find((a) => a.id === id),
 
       updateApplicationThreadId: (id, threadId) => {
-        set((state) => ({
-          applications: state.applications.map((a) =>
+        set((state) => {
+          const updatedApps = state.applications.map((a) =>
             a.id === id
               ? {
                   ...a,
@@ -118,13 +130,21 @@ export const useApplicationStore = create<ApplicationState>()(
                   updatedAt: new Date().toISOString(),
                 }
               : a
-          ),
-        }));
+          );
+          const updatedApp = updatedApps.find((a) => a.id === id);
+          return {
+            applications: updatedApps,
+            selectedApplication:
+              state.selectedApplication?.id === id
+                ? updatedApp || null
+                : state.selectedApplication,
+          };
+        });
       },
     }),
     {
       name: "application-store",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         applications: state.applications,
       }),

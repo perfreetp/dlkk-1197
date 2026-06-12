@@ -114,7 +114,7 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: "user-store",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         users: state.users,
         currentUserId: state.currentUserId,
