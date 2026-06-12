@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-sans text-neutral-800 bg-neutral-50 bg-noise-texture min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif tracking-tight;
+  }
+  ::selection {
+    @apply bg-primary-400 text-white;
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply bg-white rounded-card shadow-card border border-neutral-200/60;
+  }
+  .card-hover {
+    @apply transition-all duration-300 ease-out hover:shadow-card-hover hover:-translate-y-1;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn bg-gradient-primary text-white px-5 py-2.5 font-medium shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn border border-neutral-300 bg-white text-neutral-700 px-5 py-2.5 font-medium hover:bg-neutral-50 hover:border-neutral-400 active:scale-[0.98] transition-all duration-200;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn text-neutral-600 px-3 py-2 font-medium hover:bg-neutral-100 active:scale-[0.98] transition-all duration-200;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn bg-danger-500 text-white px-5 py-2.5 font-medium hover:bg-danger-600 active:scale-[0.98] transition-all duration-200;
+  }
+  .input-base {
+    @apply w-full rounded-btn border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20 transition;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 border border-neutral-200;
+  }
+  .chip-primary {
+    @apply inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-600 border border-primary-100;
+  }
+  .chip-success {
+    @apply inline-flex items-center gap-1 rounded-full bg-success-50 px-3 py-1 text-xs font-medium text-success-600 border border-success-100;
+  }
+  .chip-warning {
+    @apply inline-flex items-center gap-1 rounded-full bg-warning-50 px-3 py-1 text-xs font-medium text-warning-600 border border-warning-100;
+  }
+  .chip-danger {
+    @apply inline-flex items-center gap-1 rounded-full bg-danger-50 px-3 py-1 text-xs font-medium text-danger-600 border border-danger-100;
+  }
+  .label-sm {
+    @apply text-xs font-medium text-neutral-500 uppercase tracking-wider;
+  }
+  .divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-neutral-200 to-transparent;
+  }
+  .skeleton {
+    @apply bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200 animate-shimmer bg-[length:1000px_100%];
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 rounded-full;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+  .stagger-6 { animation-delay: 300ms; }
+}
