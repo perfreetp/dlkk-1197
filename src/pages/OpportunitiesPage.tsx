@@ -3,8 +3,6 @@ import { Plus, Filter } from "lucide-react";
 import { PageContainer, PageHeader } from "@/components/layout/PageContainer";
 import { SearchBar } from "@/components/opportunities/SearchBar";
 import { OpportunityCard } from "@/components/opportunities/OpportunityCard";
-import { OpportunityDetail } from "@/components/opportunities/OpportunityDetail";
-import { PublishForm } from "@/components/opportunities/PublishForm";
 import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -121,8 +119,6 @@ export default function OpportunitiesPage() {
         </div>
       )}
 
-      <PublishForm />
-      <OpportunityDetail />
     </PageContainer>
   );
 }

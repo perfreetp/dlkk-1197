@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Message, MessageThread } from "@/types";
 import { mockThreads, mockMessages } from "@/data/mockMessages";
+import { withPersist } from "@/store/persist";
 
 interface MessageState {
   threads: MessageThread[];
@@ -26,96 +27,109 @@ interface MessageState {
   markThreadRead: (threadId: string, userId: string) => void;
 }
 
-export const useMessageStore = create<MessageState>((set, get) => ({
-  threads: mockThreads,
-  messages: mockMessages,
-  activeThreadId: mockThreads[0]?.id || null,
-  draftText: "",
-
-  selectThread: (threadId) => set({ activeThreadId: threadId, draftText: "" }),
-
-  setDraftText: (text) => set({ draftText: text }),
-
-  sendMessage: (senderId, threadId, content, type = "text") => {
-    const newMsg: Message = {
-      id: "m-" + Date.now(),
-      threadId,
-      senderId,
-      content,
-      type,
-      timestamp: new Date().toISOString(),
-      read: false,
-    };
-    set((state) => ({
-      messages: [...state.messages, newMsg],
-      threads: state.threads.map((t) =>
-        t.id === threadId
-          ? {
-              ...t,
-              lastMessage: content,
-              lastMessageTime: newMsg.timestamp,
-              unreadCount:
-                t.participants[0] === senderId
-                  ? t.unreadCount + 1
-                  : t.unreadCount,
-            }
-          : t
-      ),
+export const useMessageStore = create<MessageState>()(
+  withPersist(
+    (set, get) => ({
+      threads: mockThreads,
+      messages: mockMessages,
+      activeThreadId: mockThreads[0]?.id || null,
       draftText: "",
-    }));
-  },
 
-  createThread: (participants, applicationId) => {
-    const existing = get().threads.find(
-      (t) =>
-        t.participants.length === participants.length &&
-        t.participants.every((p) => participants.includes(p))
-    );
-    if (existing) return existing.id;
+      selectThread: (threadId) => set({ activeThreadId: threadId, draftText: "" }),
 
-    const id = "thread-" + Date.now();
-    const newThread: MessageThread = {
-      id,
-      participants,
-      lastMessage: "会话已建立，开始沟通吧～",
-      lastMessageTime: new Date().toISOString(),
-      unreadCount: 0,
-      applicationId,
-      isOnline: true,
-    };
-    set((state) => ({ threads: [newThread, ...state.threads] }));
-    return id;
-  },
+      setDraftText: (text) => set({ draftText: text }),
 
-  getThreadMessages: (threadId) =>
-    get()
-      .messages.filter((m) => m.threadId === threadId)
-      .sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      ),
+      sendMessage: (senderId, threadId, content, type = "text") => {
+        const newMsg: Message = {
+          id: "m-" + Date.now(),
+          threadId,
+          senderId,
+          content,
+          type,
+          timestamp: new Date().toISOString(),
+          read: false,
+        };
+        set((state) => ({
+          messages: [...state.messages, newMsg],
+          threads: state.threads.map((t) =>
+            t.id === threadId
+              ? {
+                  ...t,
+                  lastMessage: content,
+                  lastMessageTime: newMsg.timestamp,
+                  unreadCount:
+                    t.participants[0] === senderId
+                      ? t.unreadCount + 1
+                      : t.unreadCount,
+                }
+              : t
+          ),
+          draftText: "",
+        }));
+      },
 
-  getThreadsByUser: (userId) =>
-    get()
-      .threads.filter((t) => t.participants.includes(userId))
-      .sort(
-        (a, b) =>
-          new Date(b.lastMessageTime).getTime() -
-          new Date(a.lastMessageTime).getTime()
-      ),
+      createThread: (participants, applicationId) => {
+        const existing = get().threads.find(
+          (t) =>
+            t.participants.length === participants.length &&
+            t.participants.every((p) => participants.includes(p))
+        );
+        if (existing) return existing.id;
 
-  getTotalUnread: (userId) =>
-    get()
-      .threads.filter((t) => t.participants.includes(userId))
-      .reduce((sum, t) => sum + t.unreadCount, 0),
+        const id = "thread-" + Date.now();
+        const newThread: MessageThread = {
+          id,
+          participants,
+          lastMessage: "会话已建立，开始沟通吧～",
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0,
+          applicationId,
+          isOnline: true,
+        };
+        set((state) => ({ threads: [newThread, ...state.threads] }));
+        return id;
+      },
 
-  markThreadRead: (threadId) =>
-    set((state) => ({
-      threads: state.threads.map((t) =>
-        t.id === threadId ? { ...t, unreadCount: 0 } : t
-      ),
-      messages: state.messages.map((m) =>
-        m.threadId === threadId ? { ...m, read: true } : m
-      ),
-    })),
-}));
+      getThreadMessages: (threadId) =>
+        get()
+          .messages.filter((m) => m.threadId === threadId)
+          .sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          ),
+
+      getThreadsByUser: (userId) =>
+        get()
+          .threads.filter((t) => t.participants.includes(userId))
+          .sort(
+            (a, b) =>
+              new Date(b.lastMessageTime).getTime() -
+              new Date(a.lastMessageTime).getTime()
+          ),
+
+      getTotalUnread: (userId) =>
+        get()
+          .threads.filter((t) => t.participants.includes(userId))
+          .reduce((sum, t) => sum + t.unreadCount, 0),
+
+      markThreadRead: (threadId) =>
+        set((state) => ({
+          threads: state.threads.map((t) =>
+            t.id === threadId ? { ...t, unreadCount: 0 } : t
+          ),
+          messages: state.messages.map((m) =>
+            m.threadId === threadId ? { ...m, read: true } : m
+          ),
+        })),
+    }),
+    {
+      name: "message-store",
+      version: 1,
+      partialize: (state) => ({
+        threads: state.threads,
+        messages: state.messages,
+        draftText: state.draftText,
+      }),
+    }
+  )
+);

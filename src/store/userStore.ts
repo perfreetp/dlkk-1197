@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { User, TodoItem, Statistics } from "@/types";
 import { mockUsers, CURRENT_USER_ID } from "@/data/mockUsers";
+import { withPersist } from "@/store/persist";
 
 interface UserState {
   users: User[];
@@ -13,6 +14,7 @@ interface UserState {
   toggleFavorite: (oppId: string) => void;
   markTodoDone: (todoId: string) => void;
   updateProfile: (updates: Partial<User>) => void;
+  updateUserCreditScore: (userId: string, delta: number) => void;
 }
 
 const initialTodos: TodoItem[] = [
@@ -70,32 +72,56 @@ const initialStatistics: Statistics = {
   ],
 };
 
-export const useUserStore = create<UserState>((set, get) => ({
-  users: mockUsers,
-  currentUserId: CURRENT_USER_ID,
-  todos: initialTodos,
-  statistics: initialStatistics,
-  favorites: ["opp-003", "opp-011"],
+export const useUserStore = create<UserState>()(
+  withPersist(
+    (set, get) => ({
+      users: mockUsers,
+      currentUserId: CURRENT_USER_ID,
+      todos: initialTodos,
+      statistics: initialStatistics,
+      favorites: ["opp-003", "opp-011"],
 
-  getCurrentUser: () => get().users.find((u) => u.id === get().currentUserId),
-  getUserById: (id) => get().users.find((u) => u.id === id),
+      getCurrentUser: () => get().users.find((u) => u.id === get().currentUserId),
+      getUserById: (id) => get().users.find((u) => u.id === id),
 
-  toggleFavorite: (oppId) =>
-    set((state) => ({
-      favorites: state.favorites.includes(oppId)
-        ? state.favorites.filter((id) => id !== oppId)
-        : [...state.favorites, oppId],
-    })),
+      toggleFavorite: (oppId) =>
+        set((state) => ({
+          favorites: state.favorites.includes(oppId)
+            ? state.favorites.filter((id) => id !== oppId)
+            : [...state.favorites, oppId],
+        })),
 
-  markTodoDone: (todoId) =>
-    set((state) => ({
-      todos: state.todos.filter((t) => t.id !== todoId),
-    })),
+      markTodoDone: (todoId) =>
+        set((state) => ({
+          todos: state.todos.filter((t) => t.id !== todoId),
+        })),
 
-  updateProfile: (updates) =>
-    set((state) => ({
-      users: state.users.map((u) =>
-        u.id === state.currentUserId ? { ...u, ...updates } : u
-      ),
-    })),
-}));
+      updateProfile: (updates) =>
+        set((state) => ({
+          users: state.users.map((u) =>
+            u.id === state.currentUserId ? { ...u, ...updates } : u
+          ),
+        })),
+
+      updateUserCreditScore: (userId, delta) =>
+        set((state) => ({
+          users: state.users.map((u) =>
+            u.id === userId
+              ? { ...u, creditScore: Math.max(0, Math.min(100, u.creditScore + delta)) }
+              : u
+          ),
+        })),
+    }),
+    {
+      name: "user-store",
+      version: 1,
+      partialize: (state) => ({
+        users: state.users,
+        currentUserId: state.currentUserId,
+        todos: state.todos,
+        statistics: state.statistics,
+        favorites: state.favorites,
+      }),
+    }
+  )
+);

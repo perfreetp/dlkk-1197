@@ -15,7 +15,6 @@ import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import {
   ApplicationCard,
-  ApplicationDetail,
 } from "@/components/applications/ApplicationCard";
 import { useApplicationStore } from "@/store/applicationStore";
 import { useUserStore } from "@/store/userStore";
@@ -198,7 +197,6 @@ export default function ApplicationsPage() {
         </div>
       </Card>
 
-      <ApplicationDetail />
     </PageContainer>
   );
 }

@@ -12,8 +12,6 @@ import { Bookmark, Briefcase, FileText, ShieldCheck } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
 import { useOpportunityStore } from "@/store/opportunityStore";
 import { useCreditStore } from "@/store/creditStore";
-import { OpportunityDetail } from "@/components/opportunities/OpportunityDetail";
-import { PublishForm } from "@/components/opportunities/PublishForm";
 import { formatRelativeTime, statusTextMap } from "@/utils/format";
 import { cn } from "@/utils/helpers";
 import { Link } from "react-router-dom";
@@ -253,8 +251,6 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      <OpportunityDetail />
-      <PublishForm />
     </PageContainer>
   );
 }

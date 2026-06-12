@@ -1,6 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
+import { PublishForm } from "@/components/opportunities/PublishForm";
+import { OpportunityDetail } from "@/components/opportunities/OpportunityDetail";
+import { ApplicationDetail } from "@/components/applications/ApplicationCard";
 import HomePage from "@/pages/HomePage";
 import OpportunitiesPage from "@/pages/OpportunitiesPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -32,6 +35,9 @@ function AppShell() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
+      <PublishForm />
+      <OpportunityDetail />
+      <ApplicationDetail />
     </div>
   );
 }

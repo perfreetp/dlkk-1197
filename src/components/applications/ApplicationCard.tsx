@@ -27,6 +27,7 @@ import { useApplicationStore } from "@/store/applicationStore";
 import { useUserStore } from "@/store/userStore";
 import { useOpportunityStore } from "@/store/opportunityStore";
 import { useMessageStore } from "@/store/messageStore";
+import { useCreditStore } from "@/store/creditStore";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -77,12 +78,18 @@ interface Props {
 export const ApplicationCard = ({ app, index, isSent }: Props) => {
   const selectApp = useApplicationStore((s) => s.selectApplication);
   const getUser = useUserStore((s) => s.getUserById);
-  const getOpp = useOpportunityStore((s) =>
-    s.opportunities.find((o) => o.id === app.opportunityId)
-  );
+  const users = useUserStore((s) => s.users);
+  const opportunities = useOpportunityStore((s) => s.opportunities);
 
   const otherUserId = isSent ? app.publisherId : app.applicantId;
-  const other = getUser(otherUserId);
+  const other = useMemo(
+    () => users.find((u) => u.id === otherUserId),
+    [users, otherUserId]
+  );
+  const getOpp = useMemo(
+    () => opportunities.find((o) => o.id === app.opportunityId),
+    [opportunities, app.opportunityId]
+  );
   const StatusIcon = statusIconMap[app.status];
   const statusColor = statusColorMap[app.status];
   const isActive = activeStatuses.includes(app.status);
@@ -205,7 +212,6 @@ export const ApplicationDetail = () => {
   const onClose = () => useApplicationStore.getState().toggleDetail(false);
 
   const updateStatus = useApplicationStore((s) => s.updateApplicationStatus);
-  const getUser = useUserStore((s) => s.getUserById);
   const users = useUserStore((s) => s.users);
   const currentUserId = useUserStore((s) => s.currentUserId);
   const getOpp = useOpportunityStore((s) => s.opportunities);
@@ -218,16 +224,31 @@ export const ApplicationDetail = () => {
 
   if (!app) return null;
   const isPublisher = app.publisherId === curUser?.id;
-  const applicant = getUser(app.applicantId);
-  const publisher = getUser(app.publisherId);
-  const opp = getOpp.find((o) => o.id === app.opportunityId);
+  const applicant = useMemo(
+    () => users.find((u) => u.id === app.applicantId),
+    [users, app.applicantId]
+  );
+  const publisher = useMemo(
+    () => users.find((u) => u.id === app.publisherId),
+    [users, app.publisherId]
+  );
+  const opp = useMemo(
+    () => getOpp.find((o) => o.id === app.opportunityId),
+    [getOpp, app.opportunityId]
+  );
 
   const goToChat = () => {
     if (app.messageThreadId) {
+      useMessageStore.getState().selectThread(app.messageThreadId);
       markThreadRead(app.messageThreadId, curUser?.id || "");
     }
     navigate("/messages");
     onClose();
+  };
+
+  const handleReview = () => {
+    useApplicationStore.getState().selectApplicationForReview(app);
+    useCreditStore.getState().toggleReviewModal(true);
   };
 
   return (
@@ -292,11 +313,11 @@ export const ApplicationDetail = () => {
           </div>
         )}
 
-        {applicant && !isPublisher && (
+        {applicant && (
           <div>
             <h4 className="font-semibold text-neutral-800 mb-2.5 text-sm flex items-center gap-2">
               <FileText size={15} className="text-success-500" />
-              简历摘要
+              {isPublisher ? "申请人简历摘要" : "我的简历摘要"}
             </h4>
             <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-100">
               <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-line">
@@ -310,7 +331,7 @@ export const ApplicationDetail = () => {
           <div>
             <h4 className="font-semibold text-neutral-800 mb-2.5 text-sm flex items-center gap-2">
               <Send size={15} className="text-warning-500" />
-              申请附言
+              {isPublisher ? "申请附言" : "我的附言"}
             </h4>
             <p className="p-4 rounded-xl bg-warning-50/60 border border-warning-100 text-sm text-warning-800 leading-relaxed">
               {app.coverLetter}
@@ -429,6 +450,8 @@ export const ApplicationDetail = () => {
                     "accepted",
                     "接受申请，已建立会话通道，请在消息中沟通细节"
                   );
+                } else if (["offer", "hired", "interview"].includes(app.status)) {
+                  handleReview();
                 }
               }}
               disabled={

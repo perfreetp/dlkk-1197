@@ -33,8 +33,10 @@ import { Tabs } from "@/components/common/Tabs";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useUserStore } from "@/store/userStore";
 import { useCreditStore } from "@/store/creditStore";
+import { useApplicationStore } from "@/store/applicationStore";
+import { useOpportunityStore } from "@/store/opportunityStore";
 import { cn } from "@/utils/helpers";
-import { formatRelativeTime } from "@/utils/format";
+import { formatRelativeTime, statusTextMap } from "@/utils/format";
 import { REPORT_REASONS } from "@/utils/constants";
 import type { ReviewDimensions } from "@/types";
 
@@ -53,11 +55,23 @@ export default function CreditsPage() {
   const toggleReview = useCreditStore((s) => s.toggleReviewModal);
   const addReview = useCreditStore((s) => s.addReview);
   const addCreditRecord = useCreditStore((s) => s.addCreditRecord);
+  const appForReview = useApplicationStore((s) => s.selectedApplicationForReview);
+  const opportunities = useOpportunityStore((s) => s.opportunities);
 
   const curUser = useMemo(
     () => users.find((u) => u.id === currentUserId),
     [users, currentUserId]
   );
+  
+  const reviewTarget = useMemo(() => {
+    if (!appForReview || !curUser) return null;
+    const targetId = appForReview.publisherId === curUser.id 
+      ? appForReview.applicantId 
+      : appForReview.publisherId;
+    const targetUser = users.find((u) => u.id === targetId);
+    const opp = opportunities.find((o) => o.id === appForReview.opportunityId);
+    return { user: targetUser, opp, app: appForReview };
+  }, [appForReview, curUser, users, opportunities]);
   const reviews = useMemo(
     () => (curUser ? allReviews.filter((r) => r.revieweeId === curUser.id) : []),
     [allReviews, curUser?.id]
@@ -94,28 +108,23 @@ export default function CreditsPage() {
   ];
 
   const handleSubmitReview = () => {
-    if (!curUser) return;
+    if (!curUser || !reviewTarget) return;
     addReview(
       curUser.id,
-      curUser.id,
-      useCreditStore.getState().targetApplicationId || "",
+      reviewTarget.user?.id || "",
+      reviewTarget.app.id,
       rating,
       dims,
       reviewText
     );
-    addCreditRecord({
-      userId: curUser.id,
-      type: "review",
-      title: "获得互评",
-      description: "对方给予了五星好评",
-      scoreChange: +2,
-    });
     setReviewSubmitted(true);
     setTimeout(() => {
       toggleReview(false);
+      useApplicationStore.getState().selectApplicationForReview(null);
       setReviewSubmitted(false);
       setReviewText("");
       setRating(5);
+      setDims({ responseSpeed: 5, keepingPromise: 5, communication: 5, quality: 5 });
     }, 1800);
   };
 
@@ -708,7 +717,7 @@ export default function CreditsPage() {
               <Button
                 leftIcon={<CheckCircle2 size={16} />}
                 onClick={handleSubmitReview}
-                disabled={!reviewText.trim()}
+                disabled={!reviewText.trim() || !reviewTarget}
               >
                 提交评价
               </Button>
@@ -732,15 +741,16 @@ export default function CreditsPage() {
           <div className="space-y-5">
             <div className="p-4 rounded-xl bg-gradient-to-br from-primary-50/60 via-white to-success-50/50 border border-primary-100/60">
               <div className="flex items-center gap-3">
-                <Avatar name="交换伙伴" size="lg" />
+                <Avatar name={reviewTarget?.user?.name || "交换伙伴"} size="lg" src={reviewTarget?.user?.avatar} />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-neutral-800">王浩然</div>
+                  <div className="font-semibold text-neutral-800">{reviewTarget?.user?.name || "选择评价对象"}</div>
                   <div className="text-xs text-neutral-500">
-                    推荐算法专家 · 阿里巴巴 · 「NLP算法工程师」申请
+                    {reviewTarget?.user?.title} · {reviewTarget?.user?.company}
+                    {reviewTarget?.opp && ` · 「${reviewTarget.opp.position}」申请`}
                   </div>
                 </div>
                 <Badge variant="success" size="sm" dot>
-                  已完成
+                  {reviewTarget?.app ? statusTextMap[reviewTarget.app.status] : "已完成"}
                 </Badge>
               </div>
             </div>
