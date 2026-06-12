@@ -41,7 +41,6 @@ export const ThreadList = ({ sidebarOpen, onToggleSidebar }: Props) => {
   const activeThreadId = useMessageStore((s) => s.activeThreadId);
   const selectThread = useMessageStore((s) => s.selectThread);
   const markRead = useMessageStore((s) => s.markThreadRead);
-  const getUser = useUserStore((s) => s.getUserById);
   const [search, setSearch] = useState("");
 
   const curUser = useMemo(
@@ -53,11 +52,15 @@ export const ThreadList = ({ sidebarOpen, onToggleSidebar }: Props) => {
     [threads, curUser?.id]
   );
 
-  const filtered = userThreads.filter((t) => {
-    if (!search) return true;
-    const other = getUser(t.participants.find((p) => p !== curUser?.id) || "");
-    return other?.name.toLowerCase().includes(search.toLowerCase());
-  });
+  const filtered = useMemo(
+    () => userThreads.filter((t) => {
+      if (!search) return true;
+      const otherId = t.participants.find((p) => p !== curUser?.id);
+      const other = otherId ? users.find((u) => u.id === otherId) : undefined;
+      return other?.name.toLowerCase().includes(search.toLowerCase());
+    }),
+    [userThreads, search, users, curUser?.id]
+  );
 
   return (
     <div
@@ -113,7 +116,7 @@ export const ThreadList = ({ sidebarOpen, onToggleSidebar }: Props) => {
               const otherId = thread.participants.find(
                 (p) => p !== curUser?.id
               );
-              const other = getUser(otherId || "");
+              const other = otherId ? users.find((u) => u.id === otherId) : undefined;
               const isActive = thread.id === activeThreadId;
               return (
                 <button
@@ -194,16 +197,15 @@ export const ThreadList = ({ sidebarOpen, onToggleSidebar }: Props) => {
   );
 };
 
-export const ChatWindow = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => {
+export const ChatWindow = ({ sidebarOpen, onToggleSidebar }: Props) => {
   const users = useUserStore((s) => s.users);
   const currentUserId = useUserStore((s) => s.currentUserId);
   const activeThreadId = useMessageStore((s) => s.activeThreadId);
   const threads = useMessageStore((s) => s.threads);
   const allMessages = useMessageStore((s) => s.messages);
   const getThreadMessages = useMessageStore((s) => s.getThreadMessages);
-  const getUser = useUserStore((s) => s.getUserById);
-  const getOpp = useOpportunityStore((s) => s.opportunities);
-  const getApp = useApplicationStore((s) => s.applications);
+  const opportunities = useOpportunityStore((s) => s.opportunities);
+  const applications = useApplicationStore((s) => s.applications);
   const draft = useMessageStore((s) => s.draftText);
   const setDraft = useMessageStore((s) => s.setDraftText);
   const sendMessage = useMessageStore((s) => s.sendMessage);
@@ -218,12 +220,24 @@ export const ChatWindow = ({ onToggleSidebar }: { onToggleSidebar: () => void })
     [allMessages, activeThreadId]
   );
 
-  const thread = threads.find((t) => t.id === activeThreadId);
+  const thread = useMemo(
+    () => threads.find((t) => t.id === activeThreadId),
+    [threads, activeThreadId]
+  );
   const otherId = thread?.participants.find((p) => p !== curUser?.id);
-  const other = getUser(otherId || "");
+  const other = useMemo(
+    () => (otherId ? users.find((u) => u.id === otherId) : undefined),
+    [users, otherId]
+  );
 
-  const app = getApp.find((a) => a.id === thread?.applicationId);
-  const opp = app ? getOpp.find((o) => o.id === app?.opportunityId) : undefined;
+  const app = useMemo(
+    () => applications.find((a) => a.id === thread?.applicationId),
+    [applications, thread?.applicationId]
+  );
+  const opp = useMemo(
+    () => (app ? opportunities.find((o) => o.id === app?.opportunityId) : undefined),
+    [opportunities, app?.opportunityId]
+  );
 
   const handleSend = () => {
     if (!draft.trim() || !thread || !curUser) return;
@@ -519,7 +533,7 @@ export default function MessagesPage() {
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
-          <ChatWindow onToggleSidebar={() => setSidebarOpen(true)} />
+          <ChatWindow sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(true)} />
         </div>
       </Card>
     </PageContainer>

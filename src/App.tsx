@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { PublishForm } from "@/components/opportunities/PublishForm";
 import { OpportunityDetail } from "@/components/opportunities/OpportunityDetail";
 import { ApplicationDetail } from "@/components/applications/ApplicationCard";
+import { ReviewModal } from "@/components/credit/ReviewModal";
 import HomePage from "@/pages/HomePage";
 import OpportunitiesPage from "@/pages/OpportunitiesPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -38,6 +39,7 @@ function AppShell() {
       <PublishForm />
       <OpportunityDetail />
       <ApplicationDetail />
+      <ReviewModal />
     </div>
   );
 }

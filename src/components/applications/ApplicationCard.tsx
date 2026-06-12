@@ -77,7 +77,6 @@ interface Props {
 
 export const ApplicationCard = ({ app, index, isSent }: Props) => {
   const selectApp = useApplicationStore((s) => s.selectApplication);
-  const getUser = useUserStore((s) => s.getUserById);
   const users = useUserStore((s) => s.users);
   const opportunities = useOpportunityStore((s) => s.opportunities);
 
@@ -216,32 +215,39 @@ export const ApplicationDetail = () => {
   const currentUserId = useUserStore((s) => s.currentUserId);
   const getOpp = useOpportunityStore((s) => s.opportunities);
   const markThreadRead = useMessageStore((s) => s.markThreadRead);
+  const createThread = useMessageStore((s) => s.createThread);
 
   const curUser = useMemo(
     () => users.find((u) => u.id === currentUserId),
     [users, currentUserId]
   );
-
-  if (!app) return null;
-  const isPublisher = app.publisherId === curUser?.id;
+  const isPublisher = app ? app.publisherId === curUser?.id : false;
   const applicant = useMemo(
-    () => users.find((u) => u.id === app.applicantId),
-    [users, app.applicantId]
+    () => (app ? users.find((u) => u.id === app.applicantId) : undefined),
+    [users, app?.applicantId]
   );
   const publisher = useMemo(
-    () => users.find((u) => u.id === app.publisherId),
-    [users, app.publisherId]
+    () => (app ? users.find((u) => u.id === app.publisherId) : undefined),
+    [users, app?.publisherId]
   );
   const opp = useMemo(
-    () => getOpp.find((o) => o.id === app.opportunityId),
-    [getOpp, app.opportunityId]
+    () => (app ? getOpp.find((o) => o.id === app.opportunityId) : undefined),
+    [getOpp, app?.opportunityId]
   );
 
+  if (!app) return null;
+
   const goToChat = () => {
-    if (app.messageThreadId) {
-      useMessageStore.getState().selectThread(app.messageThreadId);
-      markThreadRead(app.messageThreadId, curUser?.id || "");
+    let threadId = app.messageThreadId;
+    if (!threadId) {
+      threadId = createThread(
+        [app.applicantId, app.publisherId],
+        app.id
+      );
+      useApplicationStore.getState().updateApplicationThreadId(app.id, threadId);
     }
+    useMessageStore.getState().selectThread(threadId);
+    markThreadRead(threadId, curUser?.id || "");
     navigate("/messages");
     onClose();
   };

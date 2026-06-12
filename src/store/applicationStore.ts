@@ -25,6 +25,7 @@ interface ApplicationState {
     status: ApplicationStatus,
     note?: string
   ) => void;
+  updateApplicationThreadId: (id: string, threadId: string) => void;
   getApplicationsByUser: (
     userId: string
   ) => { sent: Application[]; received: Application[] };
@@ -106,10 +107,24 @@ export const useApplicationStore = create<ApplicationState>()(
       },
 
       getApplicationById: (id) => get().applications.find((a) => a.id === id),
+
+      updateApplicationThreadId: (id, threadId) => {
+        set((state) => ({
+          applications: state.applications.map((a) =>
+            a.id === id
+              ? {
+                  ...a,
+                  messageThreadId: threadId,
+                  updatedAt: new Date().toISOString(),
+                }
+              : a
+          ),
+        }));
+      },
     }),
     {
       name: "application-store",
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         applications: state.applications,
       }),

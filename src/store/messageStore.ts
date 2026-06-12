@@ -124,7 +124,7 @@ export const useMessageStore = create<MessageState>()(
     }),
     {
       name: "message-store",
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         threads: state.threads,
         messages: state.messages,

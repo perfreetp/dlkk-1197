@@ -121,7 +121,7 @@ export const useCreditStore = create<CreditState>()(
     }),
     {
       name: "credit-store",
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         reviews: state.reviews,
         creditRecords: state.creditRecords,

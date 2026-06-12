@@ -117,7 +117,7 @@ export const useOpportunityStore = create<OpportunityState>()(
     }),
     {
       name: "opportunity-store",
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         opportunities: state.opportunities,
         filters: state.filters,
